@@ -1,0 +1,86 @@
+# Menjalankan Cart Service beserta database PostgreSQL.
+# Product Service dapat diaktifkan nanti ketika kedua service digabung.
+
+services:
+  cart-service:
+    build: .
+    container_name: cart-service
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./.env:/app/.env
+    environment:
+      APP_NAME: cart-service
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:3001
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: pgsql
+      DB_HOST: cart-db
+      DB_PORT: 5432
+      DB_DATABASE: cartdb
+      DB_USERNAME: appuser
+      DB_PASSWORD: apppassword
+    depends_on:
+      cart-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cart-db:
+    image: postgres:16-alpine
+    container_name: cart-db
+    environment:
+      POSTGRES_DB: cartdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - cart-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d cartdb"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # Product Service dapat diaktifkan nanti.
+  # Pastikan folder ../product-service tersedia dan konfigurasi
+  # databasenya sesuai sebelum mengaktifkan blok ini.
+  #
+  # product-service:
+  #   build: ../product-service
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     DB_HOST: product-db
+  #     DB_USER: appuser
+  #     DB_PASSWORD: appppassword
+  #     DB_NAME: productdb
+  #   depends_on:
+  #     product-db:
+  #       condition: service_healthy
+  #
+  # product-db:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: productdb
+  #     MYSQL_USER: appuser
+  #     MYSQL_PASSWORD: appppassword
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - product-db-data:/var/lib/mysql
+  #     - ../product-service/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "--host=localhost", "--user=root", "--password=rootpassword"]
+  #     interval: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #     timeout: 5s
+
+volumes:
+  cart-db-data:
+  # product-db-data:
