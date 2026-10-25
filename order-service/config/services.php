@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'cart' => [
+        'url' => env('CART_SERVICE_URL', 'http://localhost:3001'),
+        'timeout' => env('CART_SERVICE_TIMEOUT', 5),
+    ],
+
+    'product' => [
+        'url' => env('PRODUCT_SERVICE_URL', 'http://localhost:3000'),
+        'timeout' => env('PRODUCT_SERVICE_TIMEOUT', 5),
+    ],
+
 ];
