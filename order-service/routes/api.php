@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
-// Routes will be defined in subsequent commits
+// POST /orders (Checkout: membuat pesanan dari isi keranjang)
+Route::post('/orders', [OrderController::class, 'store']);
