@@ -6,9 +6,12 @@ use App\Clients\CartClient;
 use App\Clients\ProductClient;
 use App\Exceptions\CartEmptyException;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\InvalidOrderStatusException;
+use App\Exceptions\OrderNotFoundException;
 use App\Exceptions\ProductNotFoundException;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -105,5 +108,65 @@ class OrderService
         }
 
         return $order;
+    }
+
+    /**
+     * Get details of a single order by ID, eager loading its items.
+     *
+     * @param int $id
+     * @return Order
+     * @throws OrderNotFoundException If order does not exist (404)
+     */
+    public function getOrder(int $id): Order
+    {
+        $order = Order::with('items')->find($id);
+
+        if (!$order) {
+            throw new OrderNotFoundException($id);
+        }
+
+        return $order;
+    }
+
+    /**
+     * Get all orders belonging to a specific user, sorted newest first, with optional status filter.
+     *
+     * @param int $userId
+     * @param string|null $status
+     * @return Collection
+     */
+    public function getUserOrders(int $userId, ?string $status = null): Collection
+    {
+        return Order::with('items')
+            ->forUser($userId)
+            ->withStatus($status)
+            ->get();
+    }
+
+    /**
+     * Simulate paying an order: change status from PENDING to PAID.
+     *
+     * @param int $id
+     * @return Order
+     * @throws OrderNotFoundException If order does not exist (404)
+     * @throws InvalidOrderStatusException If order is not in PENDING status (409)
+     */
+    public function payOrder(int $id): Order
+    {
+        $order = Order::with('items')->find($id);
+
+        if (!$order) {
+            throw new OrderNotFoundException($id);
+        }
+
+        if ($order->status !== 'PENDING') {
+            throw new InvalidOrderStatusException($order->status);
+        }
+
+        $order->update([
+            'status' => 'PAID',
+        ]);
+
+        return $order->fresh('items');
     }
 }
