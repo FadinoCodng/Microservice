@@ -8,10 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cart_items', function (Blueprint $table) {
+        Schema::create('cart_items', function (Blueprint $table) {
+            $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('product_id');
             $table->unsignedInteger('quantity')->default(1);
+            $table->timestamps();
 
             $table->index(['user_id', 'product_id']);
         });
@@ -19,13 +21,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('cart_items', function (Blueprint $table) {
-            $table->dropIndex(['user_id', 'product_id']);
-            $table->dropColumn([
-                'user_id',
-                'product_id',
-                'quantity',
-            ]);
-        });
+        Schema::dropIfExists('cart_items');
     }
 };
